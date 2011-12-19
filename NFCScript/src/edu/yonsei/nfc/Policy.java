@@ -28,6 +28,7 @@ import org.apache.http.params.HttpParams;
 
 import jscheme.Hook;
 import jscheme.AccessControlException;
+import jscheme.Scheme;
 
 /**
  * This inteface represents a hook interface to calling Java constructors,
@@ -52,6 +53,11 @@ class Policy implements Hook {
 		supervisormode = false;
 	}
 	
+	private Scheme s;
+	public void setScheme(Scheme s) {
+		this.s = s;
+	}
+	
 	public void setSupervisorMode (boolean b) {
 		supervisormode = b;
 	}
@@ -61,6 +67,7 @@ class Policy implements Hook {
 		
 		String packageName = new String();
 		String className = new String();
+		String conName = new String();
 		
 		if (DEBUG) System.out.print ("checkAccess [Constructor]: ");
 		
@@ -70,12 +77,13 @@ class Policy implements Hook {
 		else {
 			packageName = Util.getPackageName (cs.getDeclaringClass().toString());
 			className   = Util.getClassName (cs.getDeclaringClass().toString());
+			conName     = cs.getName();
 			
 			if (DEBUG) System.out.print (cs.getDeclaringClass().toString());
 			if (DEBUG) System.out.print("[" + packageName + "]");
 			if (DEBUG) System.out.print("[" + className + "]");
 			if (DEBUG) System.out.print ( " " );
-			if (DEBUG) System.out.print ( cs.toString() );
+			if (DEBUG) System.out.print ( conName );
 		}
 		
 		if (args == null) {
@@ -97,9 +105,14 @@ class Policy implements Hook {
 		if (supervisormode == false) {
 			boolean accessible = false;
 		
+			boolean flag = s.checkCache(packageName, className);
+			System.out.println("checkAccess: Constructor checkCache=" + flag);
+			
 			// POLICY: the package name must be available for ANDROID_IMEI356723040343300 
-			if ( checkAccessControl (session, operation, packageName) == 1 )
+			if ( flag || checkAccessControl (session, operation, packageName) == 1 ) {
+				s.checkConstructor(packageName, className, conName);
 				accessible = true;
+			}
 		
 			if (DEBUG) System.out.println ("accessible[constructor]: " + accessible);
 		
@@ -112,6 +125,7 @@ class Policy implements Hook {
 	public void checkAccess (Field field, Object callingobj) throws AccessControlException {
 		String packageName = new String();
 		String className = new String();
+		String fieldName = new String();
 		
 		if (DEBUG) System.out.print ("checkAccess [Field]: ");
 		if (field == null) {
@@ -120,11 +134,12 @@ class Policy implements Hook {
 		else {
 			packageName = Util.getPackageName (field.getDeclaringClass().toString());
 			className = Util.getClassName (field.getDeclaringClass().toString());
+			fieldName = field.getName();
 					
 			if (DEBUG) System.out.print (field.getDeclaringClass().toString() + " with ");
 			if (DEBUG) System.out.print("[" + packageName + "]");
 			if (DEBUG) System.out.print("[" + className + "]");
-			if (DEBUG) System.out.print (field.getName().toString() + " in ");
+			if (DEBUG) System.out.print (fieldName + " in ");
 		}
 			
 		if (callingobj == null) {
@@ -138,9 +153,15 @@ class Policy implements Hook {
 		if (supervisormode == false) {
 			boolean accessible = false;
 		
+			
+			boolean flag = s.checkCache(packageName, className);
+			System.out.println("checkAccess: Field" + flag);
+			
 			// POLICY: the package name must be available for ANDROID_IMEI356723040343300 
-			if ( checkAccessControl (session, operation, packageName) == 1 )
+			if ( flag || checkAccessControl (session, operation, packageName) == 1 ) {
+				s.checkField(packageName, className, fieldName);
 				accessible = true;
+			}
 		
 			if (DEBUG) System.out.println ("accessible[field]: " + accessible);
 		
@@ -154,6 +175,8 @@ class Policy implements Hook {
 		String packageName = new String();
 		String className = new String();
 		String methodName = new String();
+		String action = new String();
+		String data = new String();
 		
 		if (DEBUG) System.out.print ("checkAccess [Method]: ");
 		if (method == null) {
@@ -197,12 +220,15 @@ class Policy implements Hook {
 		if (supervisormode == false) {
 			boolean accessible = false;
 		
+			boolean flag = s.checkCache(packageName, className);
+			System.out.println("checkAccess: Method" + flag);
+			
 			// POLICY: the package name must be available for ANDROID_IMEI356723040343300
 			if (packageName.equals("edu.yonsei.nfc")) {
 				if (DEBUG) System.out.println ("The trusted package, edu.yonsei.nfc");
 				accessible = true;
 			}
-			else if ( checkAccessControl (session, operation, packageName) == 1 ) {
+			else if ( flag || checkAccessControl (session, operation, packageName) == 1 ) {
 			
 				// Is calling the method startActivity of android.app.Activity.startActivity
 				// with exactly one Intent argument?
@@ -218,17 +244,24 @@ class Policy implements Hook {
 				
 					if (args[0] instanceof Intent) {
 						Intent intent = (Intent)args[0];
-						String action = intent.getAction();
+						action = intent.getAction();
+						data = intent.getDataString();
 					
+						boolean flagAction = s.checkCache(packageName, action);
+						System.out.println("checkAccess: Action" + flagAction);
+						
 						// If we are calling the method, we do check if the action is allowed or not.
-						if ( checkAccessControl (session, operation, action) == 1 )
+						if ( flagAction || checkAccessControl (session, operation, action) == 1 ) {
+							s.checkAction(action, data);
 							accessible = true;
+						}
 					}
 				
 				}
 				// If we are calling a method other than android.app.Activity.startActivity,
 				// it is accessible.
 				else {
+					s.checkMethod (packageName, className, methodName);
 					accessible = true;
 				}
 			}

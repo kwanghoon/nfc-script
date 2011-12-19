@@ -1,6 +1,10 @@
 package edu.yonsei.nfc;
 
-import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
@@ -17,6 +21,7 @@ import java.io.StringBufferInputStream;
 import java.io.StringReader;
 
 import android.util.Log;
+import android.widget.TextView;
 
 import jscheme.Environment;
 import jscheme.InputPort;
@@ -34,8 +39,9 @@ import jscheme.AccessControlException;
  *           
  **/
 
-public class NFCScriptActivity extends Activity {
+public class NFCScriptActivity extends FragmentActivity {
 	boolean DEBUG = false;
+
 	
     /** Called when the activity is first created. */
     @Override
@@ -56,9 +62,13 @@ public class NFCScriptActivity extends Activity {
         		InputStream is_from_url = url.openStream();
         		
         		String policy =  // Load a user-defined policy onto the policy String.
-        				"(define (true2 x y) #t)\n" +
         				"(define (true3 x y z) #t)\n" +
-						"(define policy (cons true2 (cons true2 (cons true3 ()))))\n" +
+        				"(define (true2 a d) #t)\n" +
+        				"(define (checkIntent a d)" + 
+        				"		  (cond ((and (string=? a \"android.intent.action.VIEW\")" +
+        				"		              (string=? d \"http://www.naver.com\")) #f)" +
+        				"		        (else #t)))" +
+						"(define policy (cons true3 (cons true3 (cons true3 (cons checkIntent ())))))\n" +
 						"\n";      		
         		String str = 
         				"(define cache ())\n" +
@@ -87,13 +97,14 @@ public class NFCScriptActivity extends Activity {
         				"                  (a (addToACList h))\n" +
         				"                  (b (Use t)))\n" +
         				"                 ()))))\n" +
-        				"\n"; // +
-//        				"(UsePackages (cons \"android.app\" (cons \"android.content\" ())))\n";
+        				"\n";
         		
-//        				+ "(addToACList \"android.net\" \"Uri\")\n"
-//        				+ "(define number (android.net.Uri.parse \"tel: 01022188990\"))";
+        		String prog = policy + str;
+                
+                TextView tv = (TextView)findViewById(R.id.scripttext);
+        		tv.setText(prog);
         		
-        		InputStream is_from_string = new StringBufferInputStream(policy + str);
+        		InputStream is_from_string = new StringBufferInputStream(prog);
         		SequenceInputStream is = new SequenceInputStream(is_from_string, is_from_url);
         		startScheme(new InputPort(is));
         		
@@ -155,7 +166,9 @@ public class NFCScriptActivity extends Activity {
 
 	public static Scheme getScheme() {
 		if (s == null) {
-			s = new Scheme(new String[0], new Policy()); // Creating a Scheme interpreter with a hook interface
+			Policy p = new Policy();
+			s = new Scheme(new String[0], p); // Creating a Scheme interpreter with a hook interface
+			p.setScheme(s);
 		}
 		return s;
 	}

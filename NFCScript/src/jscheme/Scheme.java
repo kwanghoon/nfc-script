@@ -4,9 +4,15 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
-import java.util.HashSet;
+//import java.util.HashSet;
 
-import android.util.Log;
+//import android.app.AlertDialog;
+//import android.app.Dialog;
+//import android.content.DialogInterface;
+//import android.os.Bundle;
+//import android.support.v4.app.DialogFragment;
+//import android.support.v4.app.FragmentActivity;
+//import android.util.Log;
 
 /**
  * This class represents a Scheme interpreter. See
@@ -215,33 +221,49 @@ public class Scheme extends SchemeUtils {
 	public void checkAccess (Constructor<?> cs, Object[] args)
 			throws AccessControlException
 	{
-		String pkgclzname = cs.getDeclaringClass().toString();
-		String packageName = edu.yonsei.nfc.Util.getPackageName (pkgclzname);
-		String className = edu.yonsei.nfc.Util.getClassName (pkgclzname);
+		hook.checkAccess(cs,  args);	
+	}
+	
+	public void checkAccess (Field field, Object callingobj)
+			throws AccessControlException
+	{
+		hook.checkAccess (field, callingobj);
+	}
+	
+	public void checkAccess (Method method, Object callingobj, Object[] args)
+			throws AccessControlException
+	{
+		hook.checkAccess(method, callingobj, args);
 		
+//		{
+//			Object context = env.lookup("context");
+//			if (context instanceof FragmentActivity) {
+//				FragmentActivity fa = (FragmentActivity)context;
+//				DialogFragment newFragment = new MyAlertDialogFragment();
+//				newFragment.setCancelable(false);
+//				newFragment.show(fa.getSupportFragmentManager(), "dialog");
+//			}
+//		}
+	}
+	
+	// Check Constructors Under User Policy
+	public void checkConstructor (String pkg, String clz, String con) {
 		Environment env = getGlobalEnvironment();
-		Object list = env.lookup("cache");
-		
-		boolean flag = checkCache(packageName, className, list);
-		
-		System.out.println("checkAccess: Constructor checkCache=" + flag);
-		if (flag == false)
-			hook.checkAccess(cs,  args);
-		
-		System.out.println("checkAccess: Constructor checkAccess (pass)");
 		
 		// Check the user-defined policy
 		hook.setSupervisorMode(true);
 		{
 			Object policy = env.lookup("policy");
 			Object p_con = jscheme.SchemeUtils.first(policy);
-			System.out.println("checkAccess: Constructor : p_con instanceof Clsoure="
+			System.out.println("checkConstructor : p_con instanceof Clsoure="
 					+ (p_con instanceof Closure));
 			
 			if (p_con instanceof Closure) {
 				Closure f = (Closure) p_con;
 				Object x = f.body;
-				Object as = SchemeUtils.cons(cs, SchemeUtils.cons(args, null));
+				Object as = SchemeUtils.cons(pkg.toCharArray(),
+								SchemeUtils.cons(clz.toCharArray(),
+										SchemeUtils.cons(con.toCharArray(), null)));
 				Environment e = new Environment(f.parms, evalList(as, env), f.env);
 				Object r = eval (x,e);
 				
@@ -255,69 +277,13 @@ public class Scheme extends SchemeUtils {
 		}
 		hook.setSupervisorMode(false);
 		
-		System.out.println("checkAccess: Constructor checkUserDefinedPolicy (pass)");
+		System.out.println("check Constructor: pass");		
 	}
 	
-	public void checkAccess (Field field, Object callingobj)
-			throws AccessControlException
-	{
-		String pkgclzname = field.getDeclaringClass().toString();
-		String packageName = edu.yonsei.nfc.Util.getPackageName (pkgclzname);
-		String className = edu.yonsei.nfc.Util.getClassName (pkgclzname);
+	// Check Methods Under User Policy
+	public void checkMethod (String pkg, String clz, String mth) {
 		
 		Environment env = getGlobalEnvironment();
-		Object list = env.lookup("cache");
-		
-		boolean flag = checkCache(packageName, className, list);
-		
-		System.out.println("checkAccess: Field" + flag);
-		if (flag == false)
-			hook.checkAccess (field, callingobj);
-		
-		// Check the user-defined policy
-		hook.setSupervisorMode(true);
-		{
-			Object policy = env.lookup("policy");
-			Object p_field = jscheme.SchemeUtils.first(
-							jscheme.SchemeUtils.rest(policy));
-			System.out.println("checkAccess: Field : p_field instanceof Clsoure="
-					+ (p_field instanceof Closure));
-			
-			if (p_field instanceof Closure) {
-				Closure f = (Closure) p_field;
-				Object x = f.body;
-				Object as = SchemeUtils.cons(field, SchemeUtils.cons(callingobj, null));
-				Environment e = new Environment(f.parms, evalList(as, env), f.env);
-				Object r = eval (x,e);
-				
-				if (r != SchemeUtils.TRUE)
-					throw new AccessControlException
-								("The policy fun (FIELD) evaluates to Non-TRUE.");
-			}
-			else
-				throw new AccessControlException
-							("The policy fun (FIELD) is not an instance of Closure.");
-		}
-		hook.setSupervisorMode(false);
-		
-		System.out.println("checkAccess: Field checkUserDefinedPolicy (pass)");
-	}
-	
-	public void checkAccess (Method method, Object callingobj, Object[] args)
-			throws AccessControlException
-	{
-		String pkgclzname = method.getDeclaringClass().toString();
-		String packageName = edu.yonsei.nfc.Util.getPackageName (pkgclzname);
-		String className = edu.yonsei.nfc.Util.getClassName (pkgclzname);
-		
-		Environment env = getGlobalEnvironment();
-		Object list = env.lookup("cache");
-		
-		boolean flag = checkCache(packageName, className, list);
-		
-		System.out.println("checkAccess: Method" + flag);
-		if (flag == false)
-			hook.checkAccess(method, callingobj, args);
 		
 		// Check the user-defined policy
 		hook.setSupervisorMode(true);
@@ -326,15 +292,15 @@ public class Scheme extends SchemeUtils {
 			Object p_method = jscheme.SchemeUtils.first(
 								jscheme.SchemeUtils.rest(
 										jscheme.SchemeUtils.rest(policy)));
-			System.out.println("checkAccess: Field : p_method instanceof Clsoure="
+			System.out.println("checkMethod : p_method instanceof Clsoure="
 							+ (p_method instanceof Closure));
 		
 			if (p_method instanceof Closure) {
 				Closure f = (Closure) p_method;
 				Object x = f.body;
-				Object as = SchemeUtils.cons(method,
-								SchemeUtils.cons(callingobj,
-										SchemeUtils.cons(args, null)));
+				Object as = SchemeUtils.cons(pkg.toCharArray(),
+								SchemeUtils.cons(clz.toCharArray(),
+										SchemeUtils.cons(mth.toCharArray(), null)));
 				Environment e = new Environment(f.parms, evalList(as, env), f.env);
 				Object r = eval (x,e);
 			
@@ -348,10 +314,86 @@ public class Scheme extends SchemeUtils {
 		}
 		hook.setSupervisorMode(false);
 		
-		System.out.println("checkAccess: Method checkUserDefinedPolicy (pass)");
+		System.out.println("check Method : pass");
 	}
 	
-	public static boolean checkCache (String packageName, String className, Object list) {
+	// Check Fields Under User Policy
+	public void checkField (String pkg, String clz, String fld) {
+		Environment env = getGlobalEnvironment();
+		
+		// Check the user-defined policy
+		hook.setSupervisorMode(true);
+		{
+			Object policy = env.lookup("policy");
+			Object p_field = jscheme.SchemeUtils.first(
+							jscheme.SchemeUtils.rest(policy));
+			System.out.println("checkField : p_field instanceof Clsoure="
+					+ (p_field instanceof Closure));
+			
+			if (p_field instanceof Closure) {
+				Closure f = (Closure) p_field;
+				Object x = f.body;
+				Object as = SchemeUtils.cons(pkg.toCharArray(),
+								SchemeUtils.cons(clz.toCharArray(),
+										SchemeUtils.cons(fld.toCharArray(), null)));
+				Environment e = new Environment(f.parms, evalList(as, env), f.env);
+				Object r = eval (x,e);
+				
+				if (r != SchemeUtils.TRUE)
+					throw new AccessControlException
+								("The policy fun (FIELD) evaluates to Non-TRUE.");
+			}
+			else
+				throw new AccessControlException
+							("The policy fun (FIELD) is not an instance of Closure.");
+		}
+		hook.setSupervisorMode(false);
+		
+		System.out.println("checkField : pass");		
+	}
+	
+	// Check Actions Under User Policy
+	public void checkAction (String action, String data) {
+		System.out.println("checkAction:" + action + ", " + data);
+		
+		Environment env = getGlobalEnvironment();
+		
+		// Check the user-defined policy
+		hook.setSupervisorMode(true);
+		{
+			Object policy = env.lookup("policy");
+			Object p_act = jscheme.SchemeUtils.first(
+								jscheme.SchemeUtils.rest(
+										jscheme.SchemeUtils.rest(
+												jscheme.SchemeUtils.rest(policy))));
+			System.out.println("checkAction : p_act instanceof Clsoure="
+					+ (p_act instanceof Closure));
+			
+			if (p_act instanceof Closure) {
+				Closure f = (Closure) p_act;
+				Object x = f.body;
+				Object as = SchemeUtils.cons(action.toCharArray(),
+								SchemeUtils.cons(data.toCharArray(), null));
+				Environment e = new Environment(f.parms, evalList(as, env), f.env);
+				Object r = eval (x,e);
+				
+				if (r != SchemeUtils.TRUE)
+					throw new AccessControlException
+								("The policy fun (FIELD) evaluates to Non-TRUE.");
+			}
+			else
+				throw new AccessControlException
+							("The policy fun (FIELD) is not an instance of Closure.");
+		}
+		hook.setSupervisorMode(false);
+		
+		System.out.println("checkAction : pass");			
+	}
+	
+	public boolean checkCache (String packageName, String className) {
+		Environment env = getGlobalEnvironment();
+		Object list = env.lookup("cache");
+		
 		boolean flag = false;
 		String ff = "";
 			
@@ -377,4 +419,25 @@ public class Scheme extends SchemeUtils {
 		return flag;
 	}
 
+//	// For Test
+//	public class MyAlertDialogFragment extends DialogFragment {
+//		public Dialog onCreateDialog(Bundle savedInstaceState) {
+//			return new AlertDialog.Builder(getActivity())
+//				.setMessage("Are you sure you want to exit?")
+//				.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//					public void onClick(DialogInterface dialog, int id) {
+//						Log.i("NFCScriptActivity", "Yes");
+//						dialogflag = false;
+//					}
+//				})
+//				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+//					public void onClick(DialogInterface dialog, int id) {
+//						Log.i("NFCScriptActivity", "No");
+//						dialogflag = false;
+//					}
+//				})
+//				.create();
+//		}
+//	}
+	
 }
