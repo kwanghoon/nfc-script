@@ -1,5 +1,6 @@
 package edu.yonsei.nfc;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.support.v4.app.DialogFragment;
@@ -22,6 +23,7 @@ import java.io.StringReader;
 
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import jscheme.Environment;
 import jscheme.InputPort;
@@ -39,9 +41,10 @@ import jscheme.AccessControlException;
  *           
  **/
 
-public class NFCScriptActivity extends FragmentActivity {
+public class NFCScriptActivity extends Activity {
 	boolean DEBUG = false;
 
+	private Policy p = new Policy();
 	
     /** Called when the activity is first created. */
     @Override
@@ -51,73 +54,26 @@ public class NFCScriptActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        // int permission = checkAccess(android.content.Intent.ACTION_VIEW);
-        // System.out.println ("permission=" + permission);
         String url_str = resolveIntent(getIntent());
-        url_str = "http://192.168.0.15/~khchoi/nfc.scm";
         
-        if (url_str != null) {
-       	try {
-        		URL url = new URL (url_str);
-        		InputStream is_from_url = url.openStream();
+//        if (url_str != null) {
+        	try {
+        		InputStream is_from_url =
+        				new URL ("http://192.168.0.15/~khchoi/nfc.scm").openStream();
+        		InputStream is_from_userpolicy = new URL("http://192.168.0.15/~khchoi/user_policy.scm").openStream();
+        		InputStream is_from_string = new StringBufferInputStream(p.getCacheLib());
         		
-        		String policy =  // Load a user-defined policy onto the policy String.
-        				"(define (true3 x y z) #t)\n" +
-        				"(define (true2 a d) #t)\n" +
-        				"(define (checkIntent a d)" + 
-        				"		  (cond ((and (string=? a \"android.intent.action.VIEW\")" +
-        				"		              (string=? d \"http://www.naver.com\")) #f)" +
-        				"		        (else #t)))" +
-						"(define policy (cons true3 (cons true3 (cons true3 (cons checkIntent ())))))\n" +
-						"\n";      		
-        		String str = 
-        				"(define cache ())\n" +
-        				"\n" +
-        				"(define (addToACList pkgname)\n" +
-        				"   (set! cache (addToACList_ cache pkgname)))\n" +
-        				"\n" +
-        				"(define (addToACList_ cache pkgname)\n" +
-        				"   (cond ((null? cache)\n" +
-        				"            (cons\n" +
-        				"               pkgname cache))\n" +
-        				"         (else\n" +
-        				"            (letrec\n" +
-        				"                 ((h  (car cache))\n" +
-        				"                  (h1 (car h))\n" +
-        				"                  (t  (cdr cache)))\n" +
-        				"                 (cond ((equal? h1 pkgname) (cons h t))\n" +
-        				"                       (else (cons h (addToACList_ t pkgname))))))))\n" +
-        				"                       \n" +
-        				"(define (Use pcs)\n" +
-        				"   (cond ((null? pcs) (edu.yonsei.nfc.Policy.checkCache cache))\n" +
-        				"         (else \n" +
-        				"            (letrec\n" +
-        				"                 ((h (car pcs))\n" +
-        				"                  (t (cdr pcs))\n" +
-        				"                  (a (addToACList h))\n" +
-        				"                  (b (Use t)))\n" +
-        				"                 ()))))\n" +
-        				"\n";
-        		
-        		String prog = policy + str;
-                
-                TextView tv = (TextView)findViewById(R.id.scripttext);
-        		tv.setText(prog);
-        		
-        		InputStream is_from_string = new StringBufferInputStream(prog);
-        		SequenceInputStream is = new SequenceInputStream(is_from_string, is_from_url);
+        		SequenceInputStream is = new SequenceInputStream(is_from_string,
+        									new SequenceInputStream (is_from_userpolicy, is_from_url));
         		startScheme(new InputPort(is));
-        		
-        	} catch (AccessControlException e) {
-        		Log.i ("NFCScript", "[Exception] : " + e.toString() );
-    		} catch (IOException e) {
+       		}
+       		catch (IOException e) {
     			Log.i ("NFCScript", "[Exception] : " + e.toString() );
-    		}
-        }
-        
+       		}
+//        }
       
-        Log.e("NFCScript", "[NFCScriptActivity] ENDS.");      
-        
+        Log.e("NFCScript", "[NFCScriptActivity] ENDS.");
+        finish();
     }
     
     private String resolveIntent(Intent intent) {
@@ -164,9 +120,8 @@ public class NFCScriptActivity extends FragmentActivity {
     
 	static Scheme s;
 
-	public static Scheme getScheme() {
+	public Scheme getScheme() {
 		if (s == null) {
-			Policy p = new Policy();
 			s = new Scheme(new String[0], p); // Creating a Scheme interpreter with a hook interface
 			p.setScheme(s);
 		}
@@ -187,7 +142,27 @@ public class NFCScriptActivity extends FragmentActivity {
 		
 		e.define("context".intern(), this);
 		
-		java.lang.Object ret = scheme.load(inputPort);
+		java.lang.Object ret;
+		try {
+			ret = scheme.load(inputPort);
+		}
+		catch(AccessControlException exn) {
+    		ret = "exception (AC)";
+		}
+		catch (RuntimeException exn) {
+			
+    		Log.i ("NFCScript", "[Exception] : " + exn.toString() );
+    		Toast.makeText(this, exn.toString(), 10000).show();
+    		ret = "exception";
+    		
+    		if (exn instanceof AccessControlException) {
+    			AccessControlException eexn = (AccessControlException)exn;
+    			Log.i ("NFCScript", "[Exception] : " + eexn.msg );
+        		Toast.makeText(this, eexn.msg, 1000).show();
+        		ret = "exception";
+    		}
+		}
+		
 		Log.i("NFCScriptActivity:", scheme.SchemeLog);
 		if (DEBUG) System.out.println ("NFCScript Result is " + ret.toString());
 	}

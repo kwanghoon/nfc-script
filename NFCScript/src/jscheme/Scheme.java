@@ -54,7 +54,8 @@ public class Scheme extends SchemeUtils {
 			for (int i = 0; i < (files == null ? 0 : files.length); i++) {
 				load(files[i]);
 			}
-		} catch (RuntimeException e) {
+		}
+		catch (RuntimeException e) {
 			;
 		}
 	}
@@ -89,7 +90,8 @@ public class Scheme extends SchemeUtils {
 				write(eval(x), output, true);
 				output.println();
 				output.flush();
-			} catch (RuntimeException e) {
+			}
+			catch (RuntimeException e) {
 				;
 			}
 		}
@@ -267,13 +269,17 @@ public class Scheme extends SchemeUtils {
 				Environment e = new Environment(f.parms, evalList(as, env), f.env);
 				Object r = eval (x,e);
 				
-				if (r != SchemeUtils.TRUE)
+				if (r != SchemeUtils.TRUE) {
+					hook.setSupervisorMode(false);
 					throw new AccessControlException
 								("The policy fun (CON) evaluates to Non-TRUE.");
+				}
 			}
-			else
+			else {
+				hook.setSupervisorMode(false);
 				throw new AccessControlException
 							("The policy fun (CON) is not an instance of Closure.");
+			}
 		}
 		hook.setSupervisorMode(false);
 		
@@ -304,13 +310,17 @@ public class Scheme extends SchemeUtils {
 				Environment e = new Environment(f.parms, evalList(as, env), f.env);
 				Object r = eval (x,e);
 			
-				if (r != SchemeUtils.TRUE)
+				if (r != SchemeUtils.TRUE) {
+					hook.setSupervisorMode(false);
 					throw new AccessControlException
 								("The policy fun (METHOD) evaluates to Non-TRUE.");
+				}
 			}
-			else
+			else {
+				hook.setSupervisorMode(false);
 				throw new AccessControlException
 							("The policy fun (METHOD) is not an instance of Closure.");
+			}
 		}
 		hook.setSupervisorMode(false);
 		
@@ -339,13 +349,17 @@ public class Scheme extends SchemeUtils {
 				Environment e = new Environment(f.parms, evalList(as, env), f.env);
 				Object r = eval (x,e);
 				
-				if (r != SchemeUtils.TRUE)
+				if (r != SchemeUtils.TRUE) {
+					hook.setSupervisorMode(false);
 					throw new AccessControlException
 								("The policy fun (FIELD) evaluates to Non-TRUE.");
+				}
 			}
-			else
+			else {
+				hook.setSupervisorMode(false);
 				throw new AccessControlException
 							("The policy fun (FIELD) is not an instance of Closure.");
+			}
 		}
 		hook.setSupervisorMode(false);
 		
@@ -377,13 +391,17 @@ public class Scheme extends SchemeUtils {
 				Environment e = new Environment(f.parms, evalList(as, env), f.env);
 				Object r = eval (x,e);
 				
-				if (r != SchemeUtils.TRUE)
+				if (r != SchemeUtils.TRUE) {
+					hook.setSupervisorMode(false);
 					throw new AccessControlException
 								("The policy fun (FIELD) evaluates to Non-TRUE.");
+				}
 			}
-			else
+			else {
+				hook.setSupervisorMode(false);
 				throw new AccessControlException
 							("The policy fun (FIELD) is not an instance of Closure.");
+			}
 		}
 		hook.setSupervisorMode(false);
 		

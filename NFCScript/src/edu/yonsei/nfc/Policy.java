@@ -44,6 +44,54 @@ class Policy implements Hook {
 	public static String session = "ANDROID_IMEI356723040343300";
 	public static String operation = "use";
 	
+	// User-defined Policy
+	private String defaultUserPolicy = 
+			"(define (true3 x y z) #t)\n" +
+			"(define (true2 a d) #t)\n" +
+			"(define policy (cons true3 (cons true3 (cons true3 (cons true2 ())))))\n" +
+			"\n";  
+	private String userPolicy = defaultUserPolicy;
+	
+	public void setUserPolicy(String up) {
+		userPolicy = up;
+	}
+	
+	public String getUserPolicy() { return userPolicy; }
+	
+	public void resetUserPolicy() { setUserPolicy(defaultUserPolicy); }
+	
+	// For Cache
+	private String cacheLib =
+			"(define cache ())\n" +
+			"\n" +
+			"(define (addToACList pkgname)\n" +
+			"   (set! cache (addToACList_ cache pkgname)))\n" +
+			"\n" +
+			"(define (addToACList_ cache pkgname)\n" +
+			"   (cond ((null? cache)\n" +
+			"            (cons\n" +
+			"               pkgname cache))\n" +
+			"         (else\n" +
+			"            (letrec\n" +
+			"                 ((h  (car cache))\n" +
+			"                  (h1 (car h))\n" +
+			"                  (t  (cdr cache)))\n" +
+			"                 (cond ((equal? h1 pkgname) (cons h t))\n" +
+			"                       (else (cons h (addToACList_ t pkgname))))))))\n" +
+			"                       \n" +
+			"(define (Use pcs)\n" +
+			"   (cond ((null? pcs) (edu.yonsei.nfc.Policy.checkCache cache))\n" +
+			"         (else \n" +
+			"            (letrec\n" +
+			"                 ((h (car pcs))\n" +
+			"                  (t (cdr pcs))\n" +
+			"                  (a (addToACList h))\n" +
+			"                  (b (Use t)))\n" +
+			"                 ()))))\n" +
+			"\n";
+	
+	public String getCacheLib() { return cacheLib; }
+	
 	// Supervisor Mode:
 	// The Scheme interpreter now runs the user-defined policies if supervisormode is true. 
 	// Otherwise, it runs a normal code.
