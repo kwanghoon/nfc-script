@@ -27,7 +27,9 @@ public class JavaDotMethod extends Procedure {
 	}
 
 	protected boolean isMatch(Class<?>[] types, Object[] objs) {
-		if (DEBUG) System.out.println ("isMatch: " + types.length + " =?= " + objs.length);
+		
+		if (DEBUG)
+			System.out.println ("isMatch: " + types.length + " =?= " + objs.length);
 		
 		if (types.length != objs.length) {
 			return false;
@@ -35,8 +37,11 @@ public class JavaDotMethod extends Procedure {
 
 		for (int i = 0; i < objs.length; i++) {
 			
-			if (DEBUG) System.out.println ("isMatch: types[" + i + "]" + types[i].toString() );
-			if (DEBUG) System.out.println ("isMatch: objs[" + i + "].getClass" + objs[i].getClass().toString() + " ----- " + method);
+			if (DEBUG)
+				System.out.println ("isMatch: types[" + i + "]" + types[i].toString() );
+			if (DEBUG)
+				System.out.println ("isMatch: objs[" + i + "].getClass"
+									+ objs[i].getClass().toString() + " ----- " + method);
 			
 			if (types[i].isAssignableFrom(objs[i].getClass())) {
 				continue;
@@ -141,6 +146,14 @@ public class JavaDotMethod extends Procedure {
 		Object[] as = getArgs(args);
 		Method[] ms = clazz.getMethods();
 		for (int i = 0; i < ms.length; i++) {
+			
+			if (DEBUG) {
+				System.out.println("Method Name: " + ms[i].getName());
+			
+				for (Class c : ms[i].getParameterTypes())
+					System.out.println("Parameter Type: " + c.toString());
+			}
+			
 			if (ms[i].getName().equals(name)
 					&& isMatch(ms[i].getParameterTypes(), as)) {
 				
@@ -152,7 +165,7 @@ public class JavaDotMethod extends Procedure {
 						as));
 			}
 		}
-		error("Couldn't find matching method");
+		error("Couldn't find matching method: " + name);
 		return null;
 	}
 

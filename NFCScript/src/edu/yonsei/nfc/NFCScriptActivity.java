@@ -60,7 +60,8 @@ public class NFCScriptActivity extends Activity {
         	try {
         		InputStream is_from_url =
         				new URL ("http://192.168.0.15/~khchoi/nfc.scm").openStream();
-        		InputStream is_from_userpolicy = new URL("http://192.168.0.15/~khchoi/user_policy.scm").openStream();
+        		InputStream is_from_userpolicy =
+        				new URL("http://192.168.0.15/~khchoi/user_policy.scm").openStream();
         		InputStream is_from_string = new StringBufferInputStream(p.getCacheLib());
         		
         		SequenceInputStream is = new SequenceInputStream(is_from_string,

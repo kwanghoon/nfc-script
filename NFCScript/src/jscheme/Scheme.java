@@ -31,6 +31,7 @@ import java.lang.reflect.Constructor;
 
 public class Scheme extends SchemeUtils {
 	
+	public static boolean DEBUG = false;
 	public static String SchemeLog="";
 
 	InputPort input = new InputPort(System.in);
@@ -257,7 +258,7 @@ public class Scheme extends SchemeUtils {
 		{
 			Object policy = env.lookup("policy");
 			Object p_con = jscheme.SchemeUtils.first(policy);
-			System.out.println("checkConstructor : p_con instanceof Clsoure="
+			if (DEBUG) System.out.println("checkConstructor : p_con instanceof Clsoure="
 					+ (p_con instanceof Closure));
 			
 			if (p_con instanceof Closure) {
@@ -283,7 +284,7 @@ public class Scheme extends SchemeUtils {
 		}
 		hook.setSupervisorMode(false);
 		
-		System.out.println("check Constructor: pass");		
+		if (DEBUG) System.out.println("check Constructor: pass");		
 	}
 	
 	// Check Methods Under User Policy
@@ -298,7 +299,7 @@ public class Scheme extends SchemeUtils {
 			Object p_method = jscheme.SchemeUtils.first(
 								jscheme.SchemeUtils.rest(
 										jscheme.SchemeUtils.rest(policy)));
-			System.out.println("checkMethod : p_method instanceof Clsoure="
+			if (DEBUG) System.out.println("checkMethod : p_method instanceof Clsoure="
 							+ (p_method instanceof Closure));
 		
 			if (p_method instanceof Closure) {
@@ -324,7 +325,7 @@ public class Scheme extends SchemeUtils {
 		}
 		hook.setSupervisorMode(false);
 		
-		System.out.println("check Method : pass");
+		if (DEBUG) System.out.println("check Method : pass");
 	}
 	
 	// Check Fields Under User Policy
@@ -337,7 +338,7 @@ public class Scheme extends SchemeUtils {
 			Object policy = env.lookup("policy");
 			Object p_field = jscheme.SchemeUtils.first(
 							jscheme.SchemeUtils.rest(policy));
-			System.out.println("checkField : p_field instanceof Clsoure="
+			if (DEBUG) System.out.println("checkField : p_field instanceof Clsoure="
 					+ (p_field instanceof Closure));
 			
 			if (p_field instanceof Closure) {
@@ -363,12 +364,12 @@ public class Scheme extends SchemeUtils {
 		}
 		hook.setSupervisorMode(false);
 		
-		System.out.println("checkField : pass");		
+		if (DEBUG) System.out.println("checkField : pass");		
 	}
 	
 	// Check Actions Under User Policy
 	public void checkAction (String action, String data) {
-		System.out.println("checkAction:" + action + ", " + data);
+		if (DEBUG) System.out.println("checkAction:" + action + ", " + data);
 		
 		Environment env = getGlobalEnvironment();
 		
@@ -380,7 +381,7 @@ public class Scheme extends SchemeUtils {
 								jscheme.SchemeUtils.rest(
 										jscheme.SchemeUtils.rest(
 												jscheme.SchemeUtils.rest(policy))));
-			System.out.println("checkAction : p_act instanceof Clsoure="
+			if (DEBUG) System.out.println("checkAction : p_act instanceof Clsoure="
 					+ (p_act instanceof Closure));
 			
 			if (p_act instanceof Closure) {
@@ -405,7 +406,7 @@ public class Scheme extends SchemeUtils {
 		}
 		hook.setSupervisorMode(false);
 		
-		System.out.println("checkAction : pass");			
+		if (DEBUG) System.out.println("checkAction : pass");			
 	}
 	
 	public boolean checkCache (String packageName, String className) {
