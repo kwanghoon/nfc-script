@@ -39,7 +39,7 @@ import jscheme.Scheme;
  **/
 
 class Policy implements Hook {
-	static private boolean DEBUG = true;
+	static private boolean DEBUG = false;
 	
 	public static String session = "ANDROID_IMEI356723040343300";
 	public static String operation = "use";
@@ -203,7 +203,7 @@ class Policy implements Hook {
 		
 			
 			boolean flag = s.checkCache(packageName, className);
-			System.out.println("checkAccess: Field" + flag);
+			if (DEBUG) System.out.println("checkAccess: Field" + flag);
 			
 			// POLICY: the package name must be available for ANDROID_IMEI356723040343300 
 			if ( flag || checkAccessControl (session, operation, packageName) == 1 ) {
@@ -269,7 +269,7 @@ class Policy implements Hook {
 			boolean accessible = false;
 		
 			boolean flag = s.checkCache(packageName, className);
-			System.out.println("checkAccess: Method" + flag);
+			if (DEBUG) System.out.println("checkAccess: Method" + flag);
 			
 			// POLICY: the package name must be available for ANDROID_IMEI356723040343300
 			if (packageName.equals("edu.yonsei.nfc")) {
@@ -296,7 +296,7 @@ class Policy implements Hook {
 						data = intent.getDataString();
 					
 						boolean flagAction = s.checkCache(packageName, action);
-						System.out.println("checkAccess: Action" + flagAction);
+						if (DEBUG) System.out.println("checkAccess: Action" + flagAction);
 						
 						// If we are calling the method, we do check if the action is allowed or not.
 						if ( flagAction || checkAccessControl (session, operation, action) == 1 ) {
@@ -325,7 +325,7 @@ class Policy implements Hook {
 	public static int checkAccessControl (String session, String operation, String resource) {
 		String result;
 
-		Log.e("NFCScript", "[checkAccess] Server Call BEGINS.");
+		Log.i("NFCScript", "[checkAccess] Server Call BEGINS.");
 		
 		if (DEBUG) System.out.println ("checkAccess: session=" + session + ", resource=" + resource + ", operation=" + operation);
 		
@@ -383,7 +383,7 @@ class Policy implements Hook {
 		if (DEBUG) System.out.println ("checkAccess: result = " + result);
 		if (DEBUG) System.out.println ("checkAccess: retval = " + retval);
 		
-		Log.e("NFCScript", "[checkAccess] Server Call ENDS.");
+		Log.i("NFCScript", "[checkAccess] Server Call ENDS.");
 		
 		return retval;
 	}

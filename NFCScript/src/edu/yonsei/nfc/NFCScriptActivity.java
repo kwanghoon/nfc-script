@@ -49,7 +49,7 @@ public class NFCScriptActivity extends Activity {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	Log.e("NFCScript", "[NFCScriptActivity] BEGINS.");
+    	Log.i("NFCScript", "[NFCScriptActivity] BEGINS.");
     	
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
@@ -72,7 +72,7 @@ public class NFCScriptActivity extends Activity {
        		}
 //        }
       
-        Log.e("NFCScript", "[NFCScriptActivity] ENDS.");
+        Log.i("NFCScript", "[NFCScriptActivity] ENDS.");
         finish();
     }
     
@@ -80,7 +80,7 @@ public class NFCScriptActivity extends Activity {
         // Parse the intent
         String action = intent.getAction();
         if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) {
-            Log.e("NFCScript", "ACTION_TAG_DISCOVERED intent arrived" + intent);
+            Log.i("NFCScript", "ACTION_TAG_DISCOVERED intent arrived" + intent);
             
             Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
             NdefMessage[] msgs;
